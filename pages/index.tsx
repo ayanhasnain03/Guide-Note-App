@@ -9,18 +9,19 @@ import ArticleCard from 'components/ArticleCard';
 import Pagination from 'components/Pagination';
 import debounce from 'lodash.debounce';
 
+// Main Index Component
 export default function Index({ articles, categories }) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
 
-  // Debounced Search to limit rerenders
+  // Debounced Search Handler
   const handleSearchChange = debounce((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   }, 300);
 
-  // Memoize filtered articles to avoid recalculating on every render
+  // Memoized Filtered Articles
   const filteredArticles = useMemo(() => {
     const tagFilteredArticles = filterArticles(articles, selectedTag);
     return tagFilteredArticles.filter(article =>
@@ -28,6 +29,7 @@ export default function Index({ articles, categories }) {
     );
   }, [articles, selectedTag, searchTerm]);
 
+  // Memoized Paginated Articles
   const paginatedArticles = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredArticles.slice(start, start + itemsPerPage);
@@ -35,8 +37,8 @@ export default function Index({ articles, categories }) {
 
   const totalPages = Math.ceil(filteredArticles.length / itemsPerPage);
 
-  // Reset page to 1 when search or tag changes
-  const handleTagChange = useCallback(tag => {
+  // Tag Change Handler
+  const handleTagChange = useCallback((tag: string | null) => {
     setSelectedTag(tag);
     setCurrentPage(1);
   }, []);
@@ -88,16 +90,26 @@ export default function Index({ articles, categories }) {
   );
 }
 
+// Fetch Articles Server-Side
 export const getServerSideProps = async () => {
-  const data = await getAllArticles(process.env.BLOG_DATABASE_ID);
+  try {
+    const data = await getAllArticles(process.env.BLOG_DATABASE_ID);
+    const { articles, categories } = convertToArticleList(data);
 
-  // Convert the articles to the desired structure
-  const { articles, categories } = convertToArticleList(data);
+    return {
+      props: {
+        articles,
+        categories
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching articles:', error);
 
-  return {
-    props: {
-      articles,
-      categories
-    }
-  };
+    return {
+      props: {
+        articles: [],
+        categories: []
+      }
+    };
+  }
 };

@@ -8,10 +8,10 @@ const siteData = {
   footerText: '© 2024 CodeSimplyfy. All rights reserved.',
   language: 'en-us',
   locale: 'en-US',
-  ogBanner: '',
-  github: 'https://github.com/ayanhasnain03',
+  ogBanner: '/navlogo.png',
+  github: 'https://guide-note-ec1tg7h39-ayanhasnain03s-projects.vercel.app',
   twitter: 'https://x.com/AyanHasnain456',
-  websiteUrl: '',
+  websiteUrl: 'https://guide-note-app.vercel.app',
   linkedin: 'https://www.linkedin.com/in/ayan-hasnain-543475260/'
 };
 

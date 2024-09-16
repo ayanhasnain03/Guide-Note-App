@@ -10,7 +10,7 @@ export function MetaHead(props) {
 
   const titleName = title || siteData.title;
   const metaDescription = description || siteData.headerDescription || titleName;
-  const metaOgImage = siteData.ogBanner || '/navlogo.png'; // Ensure this path is correct
+  const metaOgImage = siteData.ogBanner; // Ensure this path is correct
 
   return (
     <Head>

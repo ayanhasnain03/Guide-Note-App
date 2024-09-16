@@ -18,7 +18,7 @@ export function Layout(props) {
 
   return (
     <>
-      {/* <MetaHead {...metaHeadProps} /> */}
+      <MetaHead {...metaHeadProps} />
       <div className="absolute top-0 ">
         <Header />
       </div>

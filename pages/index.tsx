@@ -1,33 +1,45 @@
-import { convertToArticleList, getAllArticles, notion } from 'utils/notion';
+import { convertToArticleList, getAllArticles } from 'utils/notion';
 import { Layout } from 'layouts/Layout';
 import HeroHeader from 'components/HeroHeader';
 import Container from 'components/Container';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { filterArticles } from 'utils/filterArticles';
 import Category from 'components/Category';
 import ArticleCard from 'components/ArticleCard';
 import Pagination from 'components/Pagination';
+import debounce from 'lodash.debounce';
 
-export default function Index(props) {
-  const { articles, categories } = props;
-
+export default function Index({ articles, categories }) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 6;
 
-  // Filter by tag first, then filter by search term
-  const tagFilteredArticles = filterArticles(articles, selectedTag);
-  const filteredArticles = tagFilteredArticles.filter(article =>
-    article.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Debounced Search to limit rerenders
+  const handleSearchChange = debounce((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, 300);
 
-  // Calculate total pages and current page articles
+  // Memoize filtered articles to avoid recalculating on every render
+  const filteredArticles = useMemo(() => {
+    const tagFilteredArticles = filterArticles(articles, selectedTag);
+    return tagFilteredArticles.filter(article =>
+      article.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [articles, selectedTag, searchTerm]);
+
+  const paginatedArticles = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredArticles.slice(start, start + itemsPerPage);
+  }, [filteredArticles, currentPage]);
+
   const totalPages = Math.ceil(filteredArticles.length / itemsPerPage);
-  const paginatedArticles = filteredArticles.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+
+  // Reset page to 1 when search or tag changes
+  const handleTagChange = useCallback(tag => {
+    setSelectedTag(tag);
+    setCurrentPage(1);
+  }, []);
 
   return (
     <Layout>
@@ -38,8 +50,7 @@ export default function Index(props) {
             type="text"
             placeholder="Search articles..."
             className="w-full max-w-md px-4 py-2 border rounded-lg mb-6"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
           />
           <div className="flex flex-wrap justify-center gap-4 mb-6">
             {categories.map(tag => (
@@ -47,14 +58,14 @@ export default function Index(props) {
                 tag={tag}
                 key={tag}
                 selectedTag={selectedTag}
-                setSelectedTag={setSelectedTag}
+                setSelectedTag={handleTagChange}
               />
             ))}
           </div>
           <div className="my-8 text-3xl font-bold text-gray-900">
             {selectedTag ? `Showing results for "${selectedTag}"` : 'All Guides'}
           </div>
-          <div className="grid gap-10 lg:gap-12 sm:grid-cols-1 md:grid-cols-2">
+          <div className="grid gap-10 lg:gap-12 sm:grid-cols-1 md:grid-cols-3">
             {paginatedArticles.length ? (
               paginatedArticles.map(article => (
                 <ArticleCard article={article} key={article.id} />
@@ -63,7 +74,6 @@ export default function Index(props) {
               <p className="text-gray-600">No articles found.</p>
             )}
           </div>
-          {/* Conditional Rendering of Pagination */}
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
@@ -78,24 +88,17 @@ export default function Index(props) {
   );
 }
 
-const fetchPageBlocks = async (pageId: string) => {
-  return notion.blocks.children.list({ block_id: pageId }).then(res => res.results);
-};
-
 export const getStaticProps = async () => {
   const data = await getAllArticles(process.env.BLOG_DATABASE_ID);
 
-  const blocks = await fetchPageBlocks(data[0].id);
-
+  // Convert the articles to the desired structure
   const { articles, categories } = convertToArticleList(data);
 
   return {
     props: {
-      data,
-      blocks,
       articles,
       categories
     },
-    revalidate: 60 * 60
+    revalidate: 60 // Revalidate every 60 seconds
   };
 };

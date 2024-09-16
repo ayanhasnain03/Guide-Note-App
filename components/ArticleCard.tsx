@@ -16,7 +16,7 @@ export default function ArticleCard({ article }: Props) {
     <Link href={`/blog/${slug}`}>
       <a className="group relative flex flex-col overflow-hidden bg-white rounded-xl shadow-xl hover:shadow-2xl transition-shadow duration-500 cursor-pointer">
         {/* Image Section */}
-        <div className="relative w-full h-60">
+        <div className="relative w-80 h-60">
           <Image
             className="object-cover w-full h-full rounded-t-xl group-hover:scale-105 transition-transform duration-500 ease-in-out"
             src={article.thumbnail}

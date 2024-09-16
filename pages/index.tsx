@@ -88,7 +88,7 @@ export default function Index({ articles, categories }) {
   );
 }
 
-export const getStaticProps = async () => {
+export const getServerSideProps = async () => {
   const data = await getAllArticles(process.env.BLOG_DATABASE_ID);
 
   // Convert the articles to the desired structure
@@ -98,7 +98,6 @@ export const getStaticProps = async () => {
     props: {
       articles,
       categories
-    },
-    revalidate: 60 // Revalidate every 60 seconds
+    }
   };
 };
